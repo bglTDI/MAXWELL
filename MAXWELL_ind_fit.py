@@ -34,140 +34,151 @@ warm_start=False
 names=os.listdir('Train_Data')
 
 station_cnt=0
+bot=-1
 
-for name in names:
-	name=name.split('.')
-	if name[-1]!="csv":
-		continue
-	name=name[0]
-	df=pd.read_csv('Train_Data/'+name+'.csv').drop(columns=['time'])
+while station_cnt<len(names):
+	bot+=1
+	for name in names[bot:]:
 
-	try:
-		result_dir='Results/'+name
-		os.mkdir(result_dir)
-	except:
-		result_dir='Results/'+name
+		name=name.split('.')
+		if name[-1]!="csv":
+			continue
+		name=name[0]
+		df=pd.read_csv('Train_Data/'+name+'.csv').drop(columns=['time'])
 
-	assert df.isna().sum().sum()==0, name+" has NANs"
+		try:
+			result_dir='Results/'+name
+			os.mkdir(result_dir)
+		except:
+			result_dir='Results/'+name
 
-	data_info={}
-	data_info['primary']=name
-	data_info['num_features']=df.shape[1]
-	data_info['train_time']=12
-	data_info['predict_time']=4
-	data_info['num_samples']=df.shape[0]
+		assert df.isna().sum().sum()==0, name+" has NANs"
 
-	X=np.zeros((data_info['num_samples'], data_info['train_time'], df.shape[1]))
-	Y=np.zeros((data_info['num_samples'], data_info['predict_time']))
-	for i in range(data_info['num_samples']-(data_info['train_time']+data_info['predict_time']+1)):
-		X[i,:,:]=df.iloc[i:i+data_info['train_time']].values
-		Y[i,:]=np.asarray(df[name+'_scaled_demand'][i+data_info['train_time']:i+data_info['train_time']+data_info['predict_time']].values)
+		data_info={}
+		data_info['primary']=name
+		data_info['num_features']=df.shape[1]
+		data_info['train_time']=12
+		data_info['predict_time']=4
+		data_info['num_samples']=df.shape[0]
 
-	idx=sample(range(len(X)),9000)
-	train_idx=idx[:6000]
-	valid_idx=idx[6000:8000]
-	test_idx=idx[8000:]
+		if station_cnt==0:
+			width=df.shape[1]
 
-	data_info['num_train_samples']=len(train_idx)
-	data_info['train_idx']=train_idx
+		if width!=df.shape[1]:
+			continue
+		else:
 
-	data_info['num_valid_samples']=len(valid_idx)
-	data_info['valid_idx']=valid_idx
+			X=np.zeros((data_info['num_samples'], data_info['train_time'], df.shape[1]))
+			Y=np.zeros((data_info['num_samples'], data_info['predict_time']))
+			for i in range(data_info['num_samples']-(data_info['train_time']+data_info['predict_time']+1)):
+				X[i,:,:]=df.iloc[i:i+data_info['train_time']].values
+				Y[i,:]=np.asarray(df[name+'_scaled_demand'][i+data_info['train_time']:i+data_info['train_time']+data_info['predict_time']].values)
 
-	data_info['num_test_samples']=len(test_idx)
-	data_info['test_idx']=test_idx
+			idx=sample(range(len(X)),9000)
+			train_idx=idx[:6000]
+			valid_idx=idx[6000:8000]
+			test_idx=idx[8000:]
 
-	data_info['fit_cnt']=1
+			data_info['num_train_samples']=len(train_idx)
+			data_info['train_idx']=train_idx
 
-	station_cnt+=1
+			data_info['num_valid_samples']=len(valid_idx)
+			data_info['valid_idx']=valid_idx
 
-	data_info['station_cnt']=station_cnt
-	data_info['num_stations']=len(names)
+			data_info['num_test_samples']=len(test_idx)
+			data_info['test_idx']=test_idx
 
-	dill.dump(data_info,open("Temp_Data/data_info.pkl",'wb'))
+			data_info['fit_cnt']=1
 
-	X_train=np.zeros(
-		(data_info['num_train_samples'],
-		 data_info['train_time'],
-		 data_info['num_features']))
-	Y_train=np.zeros(
-		(data_info['num_train_samples'],
-		 data_info['predict_time']))
+			station_cnt+=1
 
-	X_valid=np.zeros(
-		(data_info['num_valid_samples'],
-		 data_info['train_time'],
-		 data_info['num_features']))
-	Y_valid=np.zeros(
-		(data_info['num_valid_samples'],
-		 data_info['predict_time']))
+			data_info['station_cnt']=station_cnt
+			data_info['num_stations']=len(names)
 
-	X_test=np.zeros(
-		(data_info['num_test_samples'],
-		 data_info['train_time'],
-		 data_info['num_features']))
-	Y_test=np.zeros(
-		(data_info['num_test_samples'],
-		 data_info['predict_time']))
+			dill.dump(data_info,open("Temp_Data/data_info.pkl",'wb'))
 
-	for i,ind in enumerate(data_info['train_idx']):
-		X_train[i,:,:]=X[ind,:,:]
-		Y_train[i,:]=Y[ind,:]
+			X_train=np.zeros(
+				(data_info['num_train_samples'],
+				 data_info['train_time'],
+				 data_info['num_features']))
+			Y_train=np.zeros(
+				(data_info['num_train_samples'],
+				 data_info['predict_time']))
 
-	for i,ind in enumerate(data_info['valid_idx']):
-		X_valid[i,:,:]=X[ind,:,:]
-		Y_valid[i,:]=Y[ind,:]
+			X_valid=np.zeros(
+				(data_info['num_valid_samples'],
+				 data_info['train_time'],
+				 data_info['num_features']))
+			Y_valid=np.zeros(
+				(data_info['num_valid_samples'],
+				 data_info['predict_time']))
 
-	for i,ind in enumerate(data_info['test_idx']):
-		X_test[i,:,:]=X[ind,:,:]
-		Y_test[i,:]=Y[ind,:]
+			X_test=np.zeros(
+				(data_info['num_test_samples'],
+				 data_info['train_time'],
+				 data_info['num_features']))
+			Y_test=np.zeros(
+				(data_info['num_test_samples'],
+				 data_info['predict_time']))
 
-	dill.dump(X_train,open("Temp_Data/X_train.pkl",'wb'))
-	dill.dump(Y_train,open("Temp_Data/Y_train.pkl",'wb'))
+			for i,ind in enumerate(data_info['train_idx']):
+				X_train[i,:,:]=X[ind,:,:]
+				Y_train[i,:]=Y[ind,:]
 
-	dill.dump(X_valid,open("Temp_Data/X_valid.pkl",'wb'))
-	dill.dump(Y_valid,open("Temp_Data/Y_valid.pkl",'wb'))
+			for i,ind in enumerate(data_info['valid_idx']):
+				X_valid[i,:,:]=X[ind,:,:]
+				Y_valid[i,:]=Y[ind,:]
 
-	dill.dump(X_test,open("Temp_Data/X_test.pkl",'wb'))
-	dill.dump(Y_test,open("Temp_Data/Y_test.pkl",'wb'))
+			for i,ind in enumerate(data_info['test_idx']):
+				X_test[i,:,:]=X[ind,:,:]
+				Y_test[i,:]=Y[ind,:]
 
-	# Import a worker class
-	from MAXWEL_worker import MAXWEL_worker as worker
+			dill.dump(X_train,open("Temp_Data/X_train.pkl",'wb'))
+			dill.dump(Y_train,open("Temp_Data/Y_train.pkl",'wb'))
 
-	#Build an argument parser       
-	parser = argparse.ArgumentParser(description='MAXWEL - sequential execution.')
-	parser.add_argument('--min_budget',   type=float, help='Minimum budget used during the optimization.',    default=5)
-	parser.add_argument('--max_budget',   type=float, help='Maximum budget used during the optimization.',    default=30)
-	parser.add_argument('--n_iterations', type=int,   help='Number of iterations performed by the optimizer', default=10)
-	parser.add_argument('--n_workers', type=int,   help='Number of workers to run in parallel.', default=1)
-	parser.add_argument('--shared_directory',type=str, help='A directory that is accessible for all processes, e.g. a NFS share.', default='.')
+			dill.dump(X_valid,open("Temp_Data/X_valid.pkl",'wb'))
+			dill.dump(Y_valid,open("Temp_Data/Y_valid.pkl",'wb'))
 
-	args=parser.parse_args()
+			dill.dump(X_test,open("Temp_Data/X_test.pkl",'wb'))
+			dill.dump(Y_test,open("Temp_Data/Y_test.pkl",'wb'))
 
-	#Define a realtime result logger
-	result_logger = hpres.json_result_logger(directory=result_dir, overwrite=True)
+			# Import a worker class
+			from MAXWEL_worker import MAXWEL_worker as worker
+
+			#Build an argument parser       
+			parser = argparse.ArgumentParser(description='MAXWEL - sequential execution.')
+			parser.add_argument('--min_budget',   type=float, help='Minimum budget used during the optimization.',    default=1)
+			parser.add_argument('--max_budget',   type=float, help='Maximum budget used during the optimization.',    default=3)
+			parser.add_argument('--n_iterations', type=int,   help='Number of iterations performed by the optimizer', default=1)
+			parser.add_argument('--n_workers', type=int,   help='Number of workers to run in parallel.', default=1)
+			parser.add_argument('--shared_directory',type=str, help='A directory that is accessible for all processes, e.g. a NFS share.', default='.')
+
+			args=parser.parse_args()
+
+			#Define a realtime result logger
+			result_logger = hpres.json_result_logger(directory=result_dir, overwrite=True)
 
 
-	#Start a nameserver
-	NS = hpns.NameServer(run_id='MAXWEL', host='127.0.0.1', port=None)
-	NS.start()
+			#Start a nameserver
+			NS = hpns.NameServer(run_id='MAXWEL', host='127.0.0.1', port=None)
+			NS.start()
 
-	#Start the workers
-	workers=[]
-	for i in range(args.n_workers):
-		w = worker(nameserver='127.0.0.1',run_id='MAXWEL', id=i)
-		w.run(background=True)
-		workers.append(w)
+			#Start the workers
+			workers=[]
+			for i in range(args.n_workers):
+				w = worker(nameserver='127.0.0.1',run_id='MAXWEL', id=i)
+				w.run(background=True)
+				workers.append(w)
 
-	#Define and run an optimizer
-	bohb = BOHB(configspace = w.get_configspace(),
-				run_id = 'MAXWEL',
-				result_logger=result_logger,
-				min_budget=args.min_budget, 
-				max_budget=args.max_budget) 
+			#Define and run an optimizer
+			bohb = BOHB(configspace = w.get_configspace(),
+						run_id = 'MAXWEL',
+						result_logger=result_logger,
+						min_budget=args.min_budget, 
+						max_budget=args.max_budget) 
 
-	res = bohb.run(n_iterations=args.n_iterations, min_n_workers=args.n_workers)
+			res = bohb.run(n_iterations=args.n_iterations, min_n_workers=args.n_workers)
 
-	#Shutdown the nameserver
-	bohb.shutdown(shutdown_workers=True)
-	NS.shutdown()
+			#Shutdown the nameserver
+			bohb.shutdown(shutdown_workers=True)
+			NS.shutdown()

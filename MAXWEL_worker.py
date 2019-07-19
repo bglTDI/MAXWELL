@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 import time
 
 from keras.layers import Dense, Lambda ,Input, LSTM, GRU, Dropout, Conv1D, Bidirectional, Flatten, Reshape, Permute, concatenate
-from keras.models import Model, load_model
+from keras.models import Model, load_model, Sequential
 from keras import initializers, regularizers, constraints, optimizers, layers, callbacks
 from keras import backend as K
 from keras.engine import InputSpec, Layer
@@ -39,47 +39,37 @@ class MAXWEL_worker(Worker):
 	  
 	def compute(self,config,budget,working_directory,*args,**kwargs):
 
-		####################################################################
-		# Input & Split #####################################################
-		#####################################################################
-		concatenated_input= Input(shape = (self.data_info['train_time'],self.data_info['num_features'],))
+		model=Sequential()
 
 		#####################################################################
-		# Weather Feature Prong #############################################
+		# Input #############################################################
+		#####################################################################
+
+		# model.add(Input(input_shape = (self.data_info['train_time'],self.data_info['num_features'],)))
+
+		#####################################################################
+		# Attention Layer ###################################################
 		#####################################################################
 		
-		transpose_input=Permute((2,1))(concatenated_input)
-
-		temporal_GRU1 = GRU(	config['num_temporal_GRU1'],
-										recurrent_dropout=config['GRU_dropout_rate'], 
-										return_sequences = True)(transpose_input)
-		temporal_dropout_1 = Dropout(rate=config['dropout_layer_rate'])(temporal_GRU1)
-		temporal_conv1 = Conv1D(	config['num_temporal_conv'],
-											config['size_temporal_conv'],
-											padding="valid")(temporal_dropout_1)
-		temporal_GRU2 = GRU(	config['num_temporal_GRU2'], 
-										recurrent_dropout=config['GRU_dropout_rate'],
-									return_sequences=True)(temporal_conv1)
-		temporal_flatten =Flatten()(temporal_GRU2)		
+		model.add(Permute((2,1),input_shape = (self.data_info['train_time'],self.data_info['num_features'],)))
+		model.add(GRU(config['num_temporal_GRU1'], recurrent_dropout=config['GRU_dropout_rate'],  return_sequences = True))
+		model.add(Dropout(rate=config['dropout_layer_rate']))
+		model.add(Conv1D(config['num_temporal_conv'], config['size_temporal_conv'], padding="valid"))
+		model.add(GRU(config['num_temporal_GRU2'], recurrent_dropout=config['GRU_dropout_rate'], return_sequences=True))
+		model.add(Flatten())	
 		
 		#####################################################################
 		# Decision Layers ###################################################
 		#####################################################################
 
-		dense1=Dense(	config['num_dense1'],
-						activation="linear")(temporal_flatten)
-		final_dropout=Dropout(	rate=config['dropout_layer_rate'])(dense1)
-		dense2=Dense(	config['num_dense2'],
-						activation='linear')(final_dropout)
-
-		output = Dense(	self.data_info['predict_time'], 
-						activation="linear")(dense2)
+		model.add(Dense(config['num_dense1'], activation="linear"))
+		model.add(Dropout(rate=config['dropout_layer_rate']))
+		model.add(Dense(config['num_dense2'], activation='linear'))
+		model.add(Dense(self.data_info['predict_time'], activation="linear"))
 				
 		#####################################################################
 		# Model Definition ##################################################
 		#####################################################################
-
-		model=Model(concatenated_input,output)
 		
 		model.compile(loss='mean_squared_error', optimizer=Adam(lr=config['learning_rate']))
 
@@ -115,7 +105,7 @@ class MAXWEL_worker(Worker):
 
 		self.data_info['fit_cnt']=self.fit_cnt
 
-		dill.dump(self.data_info,open("Temp_Data/data_info.pkd",'wb'))
+		dill.dump(self.data_info,open("Temp_Data/data_info.pkl",'wb'))
 
 		np.set_printoptions(precision=2)
 
