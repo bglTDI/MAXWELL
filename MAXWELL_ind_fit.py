@@ -147,9 +147,9 @@ while station_cnt<len(names):
 
 			#Build an argument parser       
 			parser = argparse.ArgumentParser(description='MAXWEL - sequential execution.')
-			parser.add_argument('--min_budget',   type=float, help='Minimum budget used during the optimization.',    default=1)
-			parser.add_argument('--max_budget',   type=float, help='Maximum budget used during the optimization.',    default=3)
-			parser.add_argument('--n_iterations', type=int,   help='Number of iterations performed by the optimizer', default=1)
+			parser.add_argument('--min_budget',   type=float, help='Minimum budget used during the optimization.',    default=5)
+			parser.add_argument('--max_budget',   type=float, help='Maximum budget used during the optimization.',    default=30)
+			parser.add_argument('--n_iterations', type=int,   help='Number of iterations performed by the optimizer', default=10)
 			parser.add_argument('--n_workers', type=int,   help='Number of workers to run in parallel.', default=1)
 			parser.add_argument('--shared_directory',type=str, help='A directory that is accessible for all processes, e.g. a NFS share.', default='.')
 
