@@ -36,7 +36,7 @@ names=os.listdir('Train_Data')
 station_cnt=0
 bot=-1
 
-while station_cnt<len(names):
+while station_cnt<len(names) and bot<100:
 	bot+=1
 	for name in names[bot:]:
 
@@ -45,6 +45,8 @@ while station_cnt<len(names):
 			continue
 		name=name[0]
 		df=pd.read_csv('Train_Data/'+name+'.csv').drop(columns=['time'])
+
+		station_cnt+=1
 
 		try:
 			result_dir='Results/'+name
@@ -89,8 +91,6 @@ while station_cnt<len(names):
 			data_info['test_idx']=test_idx
 
 			data_info['fit_cnt']=1
-
-			station_cnt+=1
 
 			data_info['station_cnt']=station_cnt
 			data_info['num_stations']=len(names)
