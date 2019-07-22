@@ -73,11 +73,11 @@ class MAXWEL_worker(Worker):
 		
 		model.compile(loss='mean_squared_error', optimizer=Adam(lr=config['learning_rate']))
 
-		print('=====================================')
+		print('============================================================================')
 		print('Name: {}'.format(self.data_info['primary']))
-		print('Station {} of {}'.format(self.data_info['station_cnt'],self.data_info['num_stations']))
+		# print('Station {} of {}'.format(self.data_info['station_cnt'],self.data_info['num_stations']))
 		print('Fit: {}'.format(self.fit_cnt))
-		print('=====================================')
+		print('============================================================================')
 
 		self.fit_cnt+=1
 
@@ -109,10 +109,10 @@ class MAXWEL_worker(Worker):
 
 		np.set_printoptions(precision=2)
 
-		print('=====================================')
+		print('============================================================================')
 		print("Validation R2: {}".format(valid_R2))
 		print("Hypervalidation R2: {}".format(test_R2))
-		print('=====================================')
+		print('============================================================================')
 		print()
 		print()
 
